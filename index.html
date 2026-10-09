@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>משחק פרשת בראשית</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#fdf6e3;--fg:#2b2b2b;--card:#fff;--line:#d9c9a3;--ok:#2e9e5b;--bad:#d64545}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d2230;--fg:#f1ede2;--card:#2a3042;--line:#4a5370}}
+:root[data-theme="dark"]{--bg:#1d2230;--fg:#f1ede2;--card:#2a3042;--line:#4a5370}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Heebo","Arial",sans-serif;min-height:100vh}
+main{max-width:720px;margin:0 auto;padding:16px}
+h1{text-align:center;margin:8px 0 4px;font-size:1.8rem}
+.sub{text-align:center;margin:0 0 16px;opacity:.8}
+.decks{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.deck{border:0;border-radius:18px;aspect-ratio:3/4;font-size:4.5rem;color:#fff;cursor:pointer;font-family:inherit;box-shadow:6px 6px 0 rgba(0,0,0,.18),12px 12px 0 rgba(0,0,0,.1);transition:transform .15s}
+.deck:active{transform:scale(.96)}
+.deck small{display:block;font-size:1rem;margin-top:6px}
+.d-q{background:#3b82c4}.d-t{background:#e8912d}.d-l{background:#2e9e5b}.d-d{background:#c4483b}
+.panel{display:none;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:20px;margin-top:8px}
+.tag{font-size:2.4rem;text-align:center}
+.q{font-size:1.4rem;font-weight:700;text-align:center;margin:10px 0 16px}
+.opts{display:grid;gap:10px}
+.opt,.btn{font-family:inherit;font-size:1.15rem;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer;text-align:right}
+.btn{text-align:center;font-weight:700;background:#3b82c4;color:#fff;border:0;margin-top:14px;width:100%}
+.opt.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opt.bad{background:var(--bad);color:#fff;border-color:var(--bad)}
+.tf{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tf .opt{text-align:center;font-size:1.4rem}
+.msg{text-align:center;font-weight:700;font-size:1.2rem;margin-top:12px;min-height:1.5em}
+.score{text-align:center;margin-top:16px;font-size:1.1rem}
+#intro{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:22px 18px;margin-top:8px}
+#intro h2{text-align:center;font-size:2rem;margin:0 0 6px}
+.row{display:flex;align-items:center;gap:12px;border-radius:14px;padding:12px;margin-top:10px;color:#fff;font-size:1.1rem}
+.row b{font-size:1.2rem;display:block}
+.row .ic{font-size:2.2rem;min-width:62px;text-align:center}
+.r-q{background:#3b82c4}.r-l{background:#2e9e5b}.r-d{background:#c4483b}.r-t{background:#e8912d}
+</style>
+</head>
+<body>
+<main>
+<section id="intro">
+<h2>📖 איך משחקים?</h2>
+<p class="sub">בכל תור ילד אחד בוחר ערימת קלפים, וכולם משתתפים!</p>
+<div class="row r-q"><span class="ic">?</span><span><b>שאלות</b>מרימים אצבעות לפי התשובה: א׳ = 1, ב׳ = 2, ג׳ = 3, ד׳ = 4</span></div>
+<div class="row r-l"><span class="ic">👍👎</span><span><b>נכון או לא נכון</b>אגודל למעלה = נכון, אגודל למטה = לא נכון</span></div>
+<div class="row r-d"><span class="ic">👥</span><span><b>מי אני?</b>עונים ביחד, אבל לא צועקים</span></div>
+<div class="row r-t"><span class="ic">!</span><span><b>משימות</b>המשימה היא לכולם</span></div>
+<button class="btn" id="go">המשך למשחק ➜</button>
+</section>
+<div id="game" style="display:none">
+<h1>📖 משחק פרשת בראשית</h1>
+<p class="sub">בחרו חבילת קלפים!</p>
+<div class="decks" id="decks">
+<button class="deck d-q" data-k="q">?<small>שאלות</small></button>
+<button class="deck d-l" data-k="l">👍👎<small>נכון / לא נכון</small></button>
+<button class="deck d-d" data-k="d">👥<small>מי אני?</small></button>
+<button class="deck d-t" data-k="t">!<small>משימות</small></button>
+</div>
+<div class="panel" id="panel"></div>
+<div class="score">תשובות נכונות: <b id="sc">0</b></div>
+</div>
+</main>
+<script>
+const D={
+q:[
+["מאיזה עץ אכלו אדם וחווה?",["עץ החיים","עץ תות","עץ הדעת","עץ תאנה"],2],
+["מי היה אחיו של הבל?",["עשיו","אברהם","יפת","קין"],3],
+["באיזה יום נבראו המדוזות?",["יום ראשון","יום חמישי","יום שלישי","יום שבת"],1],
+["באיזה יום נבראו העצים?",["יום שלישי","יום שישי","יום רביעי","יום ראשון"],0],
+["במה עבד הבל ובמה עבד קין?",["קין היה מוכר והבל היה מורה","הבל היה רועה צאן וקין היה עובד אדמה","הבל היה טבח וקין היה שליח","קין היה רופא והבל היה מלצר"],1],
+["מה קרה קודם?",["השמש נבראה לפני העצים","הדגים נבראו לפני הירח","השמש נבראה לפני הדגים","המים נבראו לפני הכוכבים"],2],
+["מה היה העונש של אדם וחווה לאחר שחטאו?",["לעמוד בפינה","לכתוב 100 פעם \"אסור לאכול מעץ הדעת\"","ללכת למנהלת","גורשו מגן עדן"],3],
+["מי מהזוגות נבראו באותו היום?",["אדם וחווה","שמש וסוס","דג וכוכב","פיצה וצ'יפס"],0]
+],
+t:[
+"לזחול כמו נחש 🐍",
+"לעשות פנטומימה של חיה שנבראה ביום החמישי",
+"תעשו קול של החיה האהובה עליכם",
+"כולם אומרים את החיה שהכי היו רוצים לראות בגן עדן",
+"מה הייתם אומרים לאדם הראשון?",
+"תמצאו חפץ שנברא מהצומח",
+"מה אתם אוהבים לעשות ביום שבת?",
+"תנסו ליצור שמש של אצבעות בקבוצות ☀️",
+"לעגל את הגוף לצורת חצי ירח 🌙"
+],
+l:[
+["האדם נברא ביום השני",false],
+["קין הרג את הבל",true],
+["האור נברא ביום הראשון",true],
+["ביום השביעי אלוהים שבת מכל מלאכתו",true],
+["הנחש היה הערום מכל חיית השדה",true],
+["הדגים נבראו באותו יום עם הפרות",false],
+["מנחתו של קין התקבלה",false],
+["מנחתו של הבל התקבלה",true],
+["חווה נבראה לפני אדם",false],
+["אדם וחווה אכלו מפרי עץ הדעת",true]
+],
+d:[
+["אני ערמומי ופיתיתי את חווה לאכול מעץ הדעת","הנחש"],
+["ה' לא קיבל את מנחתי והרגתי את אחי","קין"],
+["לקחו לי צלע וממנה נהייתה לי חברה","אדם הראשון"],
+["התחרתי עם השמש ולכן הקטינו אותי ונתנו לי עוזרים","הירח"],
+["הפרידו בינינו ביום השני","המים העליונים והמים התחתונים"],
+["אני יום המנוחה","יום השביעי – שבת"],
+["אני נבראתי מצלע, ואכלתי מהעץ אחרי שדיברתי עם הנחש","חווה"],
+["אני רועה צאן, והמנחה שלי התקבלה","הבל"]
+]};
+const pool={},sh=a=>a.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+document.getElementById("go").onclick=()=>{document.getElementById("intro").style.display="none";document.getElementById("game").style.display="block";};
+let score=0;const P=document.getElementById('panel'),sc=document.getElementById('sc');
+function next(k){if(!pool[k]||!pool[k].length)pool[k]=sh(D[k]);return pool[k].pop();}
+function done(){P.style.display='none';document.getElementById('decks').style.display='grid';document.querySelector('.sub').style.display='block';}
+function show(html){document.getElementById('decks').style.display='none';document.querySelector('.sub').style.display='none';P.innerHTML=html;P.style.display='block';}
+function fin(){return '<button class="btn" onclick="done()">לקלף הבא ➜</button>';}
+function pick(el,ok,fb){
+if(el.parentNode.dataset.a)return;el.parentNode.dataset.a=1;
+el.classList.add(ok?'ok':'bad');
+if(ok){score++;sc.textContent=score;}
+document.getElementById('m').textContent=ok?'כל הכבוד! ✅':fb;
+if(!ok){const c=el.parentNode.querySelector('[data-c]');if(c)c.classList.add('ok');}
+}
+window.done=done;window.pick=pick;
+document.querySelectorAll('.deck').forEach(b=>b.onclick=()=>{
+const k=b.dataset.k,c=next(k);
+if(k==='q'){
+show('<div class="tag">?</div><div class="q">'+c[0]+'</div><div class="opts" id="o">'+
+c[1].map((t,i)=>'<button class="opt" '+(i===c[2]?'data-c="1" ':'')+'data-i="'+i+'">'+'אבגד'[i]+'. '+t+'</button>').join('')+
+'</div><div class="msg" id="m"></div>'+fin());
+document.querySelectorAll('#o .opt').forEach(o=>o.onclick=()=>pick(o,+o.dataset.i===c[2],'לא נכון, התשובה הנכונה מסומנת ירוק'));
+}else if(k==='t'){
+show('<div class="tag">!</div><div class="q">'+c+'</div>'+fin().replace('לקלף הבא','בוצע! לקלף הבא'));
+}else if(k==='d'){
+show('<div class="tag">👥</div><div class="q">מי אני?</div><div class="q" style="font-weight:400">'+c[0]+'</div><div class="msg" id="m"></div><button class="btn" id="rv">גלו את התשובה</button>'+fin());
+document.getElementById('rv').onclick=function(){document.getElementById('m').textContent='התשובה: '+c[1];this.style.display='none';};
+}else{
+show('<div class="tag">👍👎</div><div class="q">'+c[0]+'?</div><div class="tf" id="o"><button class="opt" data-v="1" '+(c[1]?'data-c="1"':'')+'>✔ נכון</button><button class="opt" data-v="0" '+(!c[1]?'data-c="1"':'')+'>✘ לא נכון</button></div><div class="msg" id="m"></div>'+fin());
+document.querySelectorAll('#o .opt').forEach(o=>o.onclick=()=>pick(o,(o.dataset.v==='1')===c[1],'לא נכון, התשובה הנכונה מסומנת ירוק'));
+}
+});
+</script>
+</body>
+</html>
